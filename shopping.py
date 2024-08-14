@@ -31,6 +31,16 @@ def main():
     print(f"True Negative Rate: {100 * specificity:.2f}%")
 
 
+
+
+def get_month_value(month):
+    months = ["Jan", "Feb", "Mar", "Apr", "May", "June", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+    return months.index(month)
+
+
+
+
+
 def load_data(filename):
     """
     Load shopping data from a CSV file `filename` and convert into a list of
@@ -59,7 +69,42 @@ def load_data(filename):
     labels should be the corresponding list of labels, where each label
     is 1 if Revenue is true, and 0 otherwise.
     """
-    raise NotImplementedError
+    evidence = []
+    labels = []
+
+    with open(filename, "r") as data_file:
+        reader = csv.DictReader(data_file)
+        for row in reader:
+            #the first 17 columns are evidence. Read them as user_evidence
+            user_evidence = []
+            user_evidence.append(int(row["Administrative"]))
+            user_evidence.append(float(row["Administrative_Duration"]))
+            user_evidence.append(int(row["Informational"]))
+            user_evidence.append(int(row["ProductRelated"]))
+            user_evidence.append(float(row["ProductRelated_Duration"]))
+            user_evidence.append(float(row["BounceRates"]))
+            user_evidence.append(float(row["ExitRates"]))
+            user_evidence.append(float(row["PageValues"]))
+            user_evidence.append(float(row["SpecialDay"]))
+            month = get_month_value(row["Month"])
+            user_evidence.append(month)
+            user_evidence.append(int(row["OperatingSystems"]))
+            user_evidence.append(int(row["Browser"]))
+            user_evidence.append(int(row["Region"]))
+            user_evidence.append(int(row["TrafficType"]))
+            visitor_type = 1 if row["VisitorType"] == "Returning_Visitor" else 0
+            user_evidence.append(visitor_type)
+            weekend = 1 if row["Weekend"] == "TRUE" else 0
+            user_evidence.append(weekend)
+
+            # add the evidence for the user to the collective evidence list
+            evidence.append(user_evidence)
+
+            # the last column is the label
+            revenue = 1 if row["Revenue"] == "TRUE" else 0
+            labels.append(revenue)
+
+    return evidence, labels
 
 
 def train_model(evidence, labels):
@@ -67,7 +112,8 @@ def train_model(evidence, labels):
     Given a list of evidence lists and a list of labels, return a
     fitted k-nearest neighbor model (k=1) trained on the data.
     """
-    raise NotImplementedError
+    model = KNeighborsClassifier(n_neighbors= 1)
+    return model.fit(evidence, labels)
 
 
 def evaluate(labels, predictions):
@@ -85,7 +131,29 @@ def evaluate(labels, predictions):
     representing the "true negative rate": the proportion of
     actual negative labels that were accurately identified.
     """
-    raise NotImplementedError
+    size = len(labels)
+    total_positive = 0
+
+    total_true = [0, 0]  # total_true[0] = times true negative
+                         # total_true[1] = times true positive
+    for i in range(size):
+        true_value = labels[i]       # 1 - user purchased,    0 - user did not purchase
+        total_positive += true_value
+        if true_value == predictions[i]:
+            total_true[labels[i]] += 1
+
+
+    if total_positive != 0:
+        sensitivity = total_true[1] / total_positive
+    else:
+        sensitivity = 1
+
+    if total_positive != size:
+        specificity = total_true[0] / (size - total_positive)
+    else:
+        specificity = 1
+
+    return sensitivity, specificity
 
 
 if __name__ == "__main__":
