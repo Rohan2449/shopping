@@ -80,6 +80,7 @@ def load_data(filename):
             user_evidence.append(int(row["Administrative"]))
             user_evidence.append(float(row["Administrative_Duration"]))
             user_evidence.append(int(row["Informational"]))
+            user_evidence.append(float(row["Informational_Duration"]))
             user_evidence.append(int(row["ProductRelated"]))
             user_evidence.append(float(row["ProductRelated_Duration"]))
             user_evidence.append(float(row["BounceRates"]))
